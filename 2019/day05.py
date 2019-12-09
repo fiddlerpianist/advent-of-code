@@ -8,7 +8,14 @@ with open('day05.txt') as f:
     ops = list(map(int, opsAsStrings))
 
 myOps = ops.copy()
-print ("Part One: %s" % intcode.run(myOps, [1]))
+
+latestOutput = None
+state = intcode.run(myOps, [1])
+while not state.done:
+    latestOutput = state.output
+    # print (latestOutput)
+    state = intcode.run(myOps, [], state.address)
+print ("Part One: %s" % latestOutput)
 
 myOps = ops.copy()
-print ("Part Two: %s" % intcode.run(myOps, [5]))
+print ("Part Two: %s" % intcode.run(myOps, [5]).output)

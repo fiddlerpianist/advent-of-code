@@ -34,11 +34,11 @@ class ProgramState:
 
 
 
-def run(ops, input, startingAddress = 0):
+def run(ops, input, startingAddress = 0, lastOutput = None):
     # start at the front of the inputs
     inputIndex = 0
     # no output yet
-    output = -1
+    output = lastOutput
     # assign to i for brevity
     i = startingAddress
     while ops[i] != 99:

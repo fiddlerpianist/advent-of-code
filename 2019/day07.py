@@ -1,12 +1,6 @@
 from itertools import permutations
 import intcode
 
-def init_amplifiers(ops):
-    amps = []
-    for i in range(0,5):
-        amps.append(ops.copy())
-    return amps
-
 def part_one(ops):
     thrusterSignals = []
     for phaseCombo in list(permutations(range(0, 5))):
@@ -21,11 +15,11 @@ def part_one(ops):
 
 def get_final_output(ops, input):
     latestOutput = None
-    state = intcode.run(ops, input)
+    state = intcode.run(intcode.ProgramState(ops), input)
     while not state.done:
         latestOutput = state.output
         # print (latestOutput)
-        state = intcode.run(ops, [], state.address)
+        state = intcode.run(intcode.ProgramState(ops, None, state.address), [])
     return latestOutput
 
 with open('day07.txt') as f:
@@ -35,7 +29,7 @@ with open('day07.txt') as f:
     ops = list(map(int, opsAsStrings))
 
 # Part One
-#print ("Part One: %i" % part_one(ops))
+print ("Part One: %i" % part_one(ops))
 
 
 def part_two(ops):
@@ -47,12 +41,12 @@ def part_two(ops):
         for i in range(0,5):
             # run the program using a copy of the instructions using the next phase in the combo,
             # saving the state and feed the output to the next iteration
-            state = intcode.run(ops.copy(), [phaseCombo[i], output])
+            state = intcode.run(intcode.ProgramState(ops.copy()), [phaseCombo[i], output])
             output = state.output
             states.append(state)
         while states[4].done is False:
             for i in range(0,5):
-                state = intcode.run(states[i].ops, [output], states[i].address, states[i].output)
+                state = intcode.run(intcode.ProgramState(states[i].ops, states[i].output, states[i].address), [output])
                 output = state.output
                 # assign new state to this amplifier
                 states[i] = state

@@ -9,11 +9,13 @@ class Operation(Enum):
     JUMP_IF_FALSE = 6
     LESS_THAN = 7
     EQUALS = 8
+    RELATIVE_BASE = 9
     TERMINATION = 99
 
 class Mode(Enum):
     POSITION = 0
     IMMEDIATE = 1
+    RELATIVE = 2
 
 class Instruction:
     def __init__(self, opcode):
@@ -26,17 +28,21 @@ class Instruction:
         return "{}, {}".format(repr(self.operation), self.modes)
 
 class ProgramState:
-    def __init__(self, output, ops, address, done = False):
+    def __init__(self, ops, output = None, address = 0, memory = {}, done = False):
         self.output = output
         self.ops = ops
         self.address = address
+        self.memory = memory
         self.done = done
 
+def run(state, inp):
+    return _run(state.ops, inp, state.address, state.output, state.memory)
 
-
-def run(ops, input, startingAddress = 0, lastOutput = None):
+def _run(ops, input, startingAddress, lastOutput, memory):
     # start at the front of the inputs
     inputIndex = 0
+    # relative base starts at 0
+    relativeBase = 0
     # no output yet
     output = lastOutput
     # assign to i for brevity
@@ -64,7 +70,7 @@ def run(ops, input, startingAddress = 0, lastOutput = None):
         elif instruction.operation is Operation.OUTPUT:
             output = ops[ops[i+1]]
             i += 2
-            return ProgramState(output, ops, i)
+            return ProgramState(ops, output, i)
         elif instruction.operation is Operation.JUMP_IF_TRUE:
             first = ops[i+1] if instruction.modes[0] is Mode.IMMEDIATE else ops[ops[i+1]]
             second = ops[i+2] if instruction.modes[1] is Mode.IMMEDIATE else ops[ops[i+2]]
@@ -89,7 +95,17 @@ def run(ops, input, startingAddress = 0, lastOutput = None):
             second = ops[i+2] if instruction.modes[1] is Mode.IMMEDIATE else ops[ops[i+2]]
             ops[ops[i+3]] = 1 if first == second else 0
             i += 4
-    return ProgramState(output, ops, i, True)
+        elif instruction.operation is Operation.RELATIVE_BASE:
+            if instruction.modes[0] is Mode.IMMEDIATE:
+                relativeBase += ops[i+1]
+            elif instruction.modes[0] is Mode.POSITION:
+                relativeBase += ops[ops[i+1]]
+            else: # Relative mode
+                #relativeBase += 
+                pass
+            #relativeBase += ops[i+1] if  else ops[ops[i+1]]
+            #i += 2
+    return ProgramState(ops, output, i, {}, True)
 
 # Returns the number at the given position (0 being the rightmost)
 def _get_nth_digit(n, number):

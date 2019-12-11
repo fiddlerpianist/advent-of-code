@@ -20,7 +20,7 @@ def get_final_output(ops, input):
     while not state.done:
         latestOutput = state.output
         # print (latestOutput)
-        state = run(ProgramState(ops, None, state.address), [])
+        state = run(state, [])
     return latestOutput
 
 with open('day07.txt') as f:
@@ -47,7 +47,7 @@ def part_two(ops):
             states.append(state)
         while states[4].done is False:
             for i in range(0,5):
-                state = run(ProgramState(states[i].ops, states[i].output, states[i].address), [output])
+                state = run(states[i], [output])
                 output = state.output
                 # assign new state to this amplifier
                 states[i] = state

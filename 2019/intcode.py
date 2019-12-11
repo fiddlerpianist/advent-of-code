@@ -29,8 +29,8 @@ class Instruction:
 
 class ProgramState:
     def __init__(self, ops, output = None, address = 0, memory = {}, done = False):
-        self.output = output # any previous output
         self.ops = ops # the instruction set
+        self.output = output # any previous output
         self.address = address # index of next instruction to execute
         self.memory = memory # the memory heap
         self.done = done # flag to indicate whether this program has hit opcode 99
@@ -68,7 +68,7 @@ def _run(ops, input, startingAddress, lastOutput, memory):
             inputIndex += 1
             i += 2
         elif instruction.operation is Operation.OUTPUT:
-            output = ops[ops[i+1]]
+            output = _get_resolved_arg(instruction, ops, i, 1)
             i += 2
             return ProgramState(ops, output, i)
         elif instruction.operation is Operation.JUMP_IF_TRUE:
@@ -96,15 +96,9 @@ def _run(ops, input, startingAddress, lastOutput, memory):
             ops[ops[i+3]] = 1 if first == second else 0
             i += 4
         elif instruction.operation is Operation.RELATIVE_BASE:
-            if instruction.modes[0] is Mode.IMMEDIATE:
-                relativeBase += ops[i+1]
-            elif instruction.modes[0] is Mode.POSITION:
-                relativeBase += ops[ops[i+1]]
-            else: # Relative mode
-                #relativeBase += 
-                pass
-            #relativeBase += ops[i+1] if  else ops[ops[i+1]]
-            #i += 2
+            rel_offset = _get_resolved_arg(instruction, ops, i, 1)
+            relativeBase += rel_offset
+            i += 2
     return ProgramState(ops, output, i, {}, True)
 
 # Returns the number at the given position (0 being the rightmost)
@@ -118,6 +112,8 @@ def _get_resolved_arg(instruction, ops, address, arg):
         return ops[address+arg]
     elif mode is Mode.POSITION:
         return ops[ops[address+arg]]
+    elif mode is Mode.RELATIVE:
+        return ops[ops[address+arg]+relativeBase]
     else:
         print ("Bonkers! Unhandled case")
 

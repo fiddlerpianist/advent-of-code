@@ -1,5 +1,6 @@
 from itertools import permutations
-import intcode
+from intcode import ProgramState
+from intcode import run
 
 def part_one(ops):
     thrusterSignals = []
@@ -15,11 +16,11 @@ def part_one(ops):
 
 def get_final_output(ops, input):
     latestOutput = None
-    state = intcode.run(intcode.ProgramState(ops), input)
+    state = run(ProgramState(ops), input)
     while not state.done:
         latestOutput = state.output
         # print (latestOutput)
-        state = intcode.run(intcode.ProgramState(ops, None, state.address), [])
+        state = run(ProgramState(ops, None, state.address), [])
     return latestOutput
 
 with open('day07.txt') as f:
@@ -41,12 +42,12 @@ def part_two(ops):
         for i in range(0,5):
             # run the program using a copy of the instructions using the next phase in the combo,
             # saving the state and feed the output to the next iteration
-            state = intcode.run(intcode.ProgramState(ops.copy()), [phaseCombo[i], output])
+            state = run(ProgramState(ops.copy()), [phaseCombo[i], output])
             output = state.output
             states.append(state)
         while states[4].done is False:
             for i in range(0,5):
-                state = intcode.run(intcode.ProgramState(states[i].ops, states[i].output, states[i].address), [output])
+                state = run(ProgramState(states[i].ops, states[i].output, states[i].address), [output])
                 output = state.output
                 # assign new state to this amplifier
                 states[i] = state

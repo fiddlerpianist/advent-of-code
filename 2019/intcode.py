@@ -29,11 +29,11 @@ class Instruction:
 
 class ProgramState:
     def __init__(self, ops, output = None, address = 0, memory = {}, done = False):
-        self.output = output
-        self.ops = ops
-        self.address = address
-        self.memory = memory
-        self.done = done
+        self.output = output # any previous output
+        self.ops = ops # the instruction set
+        self.address = address # index of next instruction to execute
+        self.memory = memory # the memory heap
+        self.done = done # flag to indicate whether this program has hit opcode 99
 
 def run(state, inp):
     return _run(state.ops, inp, state.address, state.output, state.memory)
@@ -50,15 +50,15 @@ def _run(ops, input, startingAddress, lastOutput, memory):
     while ops[i] != 99:
         instruction = Instruction(ops[i])
         if instruction.operation is Operation.ADDITION:
-            first = ops[i+1] if instruction.modes[0] is Mode.IMMEDIATE else ops[ops[i+1]]
-            second = ops[i+2] if instruction.modes[1] is Mode.IMMEDIATE else ops[ops[i+2]]
+            first = _get_resolved_arg(instruction, ops, i, 1)
+            second = _get_resolved_arg(instruction, ops, i, 2)
             result = first + second
             # the last mode should *always* be POSITION
             ops[ops[i+3]] = result
             i += 4
         elif instruction.operation is Operation.MULTIPLICATION:
-            first = ops[i+1] if instruction.modes[0] is Mode.IMMEDIATE else ops[ops[i+1]]
-            second = ops[i+2] if instruction.modes[1] is Mode.IMMEDIATE else ops[ops[i+2]]
+            first = _get_resolved_arg(instruction, ops, i, 1)
+            second = _get_resolved_arg(instruction, ops, i, 2)
             val = first * second
             # the last mode should *always* be POSITION
             ops[ops[i+3]] = val
@@ -72,27 +72,27 @@ def _run(ops, input, startingAddress, lastOutput, memory):
             i += 2
             return ProgramState(ops, output, i)
         elif instruction.operation is Operation.JUMP_IF_TRUE:
-            first = ops[i+1] if instruction.modes[0] is Mode.IMMEDIATE else ops[ops[i+1]]
-            second = ops[i+2] if instruction.modes[1] is Mode.IMMEDIATE else ops[ops[i+2]]
+            first = _get_resolved_arg(instruction, ops, i, 1)
+            second = _get_resolved_arg(instruction, ops, i, 2)
             if first != 0:
                 i = second
             else:
                 i += 3
         elif instruction.operation is Operation.JUMP_IF_FALSE:
-            first = ops[i+1] if instruction.modes[0] is Mode.IMMEDIATE else ops[ops[i+1]]
-            second = ops[i+2] if instruction.modes[1] is Mode.IMMEDIATE else ops[ops[i+2]]
+            first = _get_resolved_arg(instruction, ops, i, 1)
+            second = _get_resolved_arg(instruction, ops, i, 2)
             if first == 0:
                 i = second
             else:
                 i += 3
         elif instruction.operation is Operation.LESS_THAN:
-            first = ops[i+1] if instruction.modes[0] is Mode.IMMEDIATE else ops[ops[i+1]]
-            second = ops[i+2] if instruction.modes[1] is Mode.IMMEDIATE else ops[ops[i+2]]
+            first = _get_resolved_arg(instruction, ops, i, 1)
+            second = _get_resolved_arg(instruction, ops, i, 2)
             ops[ops[i+3]] = 1 if first < second else 0
             i += 4
         elif instruction.operation is Operation.EQUALS:
-            first = ops[i+1] if instruction.modes[0] is Mode.IMMEDIATE else ops[ops[i+1]]
-            second = ops[i+2] if instruction.modes[1] is Mode.IMMEDIATE else ops[ops[i+2]]
+            first = _get_resolved_arg(instruction, ops, i, 1)
+            second = _get_resolved_arg(instruction, ops, i, 2)
             ops[ops[i+3]] = 1 if first == second else 0
             i += 4
         elif instruction.operation is Operation.RELATIVE_BASE:
@@ -110,3 +110,14 @@ def _run(ops, input, startingAddress, lastOutput, memory):
 # Returns the number at the given position (0 being the rightmost)
 def _get_nth_digit(n, number):
     return number // 10**n % 10
+
+def _get_resolved_arg(instruction, ops, address, arg):
+    # ops[i+1] if instruction.modes[0] is Mode.IMMEDIATE else ops[ops[i+1]]
+    mode = instruction.modes[arg-1]
+    if mode is Mode.IMMEDIATE:
+        return ops[address+arg]
+    elif mode is Mode.POSITION:
+        return ops[ops[address+arg]]
+    else:
+        print ("Bonkers! Unhandled case")
+

@@ -52,19 +52,18 @@ def _run(ops, input, startingAddress, lastOutput, memory):
         if instruction.operation is Operation.ADDITION:
             first = _get_resolved_arg(instruction, ops, i, 1)
             second = _get_resolved_arg(instruction, ops, i, 2)
-            result = first + second
-            # the last mode should *always* be POSITION
-            ops[ops[i+3]] = result
+            destination = _get_resolved_position(instruction, ops, i, 3)
+            ops[destination] = first + second
             i += 4
         elif instruction.operation is Operation.MULTIPLICATION:
             first = _get_resolved_arg(instruction, ops, i, 1)
             second = _get_resolved_arg(instruction, ops, i, 2)
-            val = first * second
-            # the last mode should *always* be POSITION
-            ops[ops[i+3]] = val
+            destination = _get_resolved_position(instruction, ops, i, 3)
+            ops[destination] = first * second
             i += 4
         elif instruction.operation is Operation.INPUT:
-            ops[ops[i+1]] = int(input[inputIndex])
+            destination = _get_resolved_position(instruction, ops, i, 1)
+            ops[destination] = int(input[inputIndex])
             inputIndex += 1
             i += 2
         elif instruction.operation is Operation.OUTPUT:
@@ -88,12 +87,14 @@ def _run(ops, input, startingAddress, lastOutput, memory):
         elif instruction.operation is Operation.LESS_THAN:
             first = _get_resolved_arg(instruction, ops, i, 1)
             second = _get_resolved_arg(instruction, ops, i, 2)
-            ops[ops[i+3]] = 1 if first < second else 0
+            destination = _get_resolved_position(instruction, ops, i, 3)
+            ops[destination] = 1 if first < second else 0
             i += 4
         elif instruction.operation is Operation.EQUALS:
             first = _get_resolved_arg(instruction, ops, i, 1)
             second = _get_resolved_arg(instruction, ops, i, 2)
-            ops[ops[i+3]] = 1 if first == second else 0
+            destination = _get_resolved_position(instruction, ops, i, 3)
+            ops[destination] = 1 if first == second else 0
             i += 4
         elif instruction.operation is Operation.RELATIVE_BASE:
             rel_offset = _get_resolved_arg(instruction, ops, i, 1)
@@ -114,6 +115,16 @@ def _get_resolved_arg(instruction, ops, address, arg):
         return ops[ops[address+arg]]
     elif mode is Mode.RELATIVE:
         return ops[ops[address+arg]+relativeBase]
+    else:
+        print ("Bonkers! Unhandled case")
+
+def _get_resolved_position(instruction, ops, address, arg):
+    # ops[i+1] if instruction.modes[0] is Mode.IMMEDIATE else ops[ops[i+1]]
+    mode = instruction.modes[arg-1]
+    if mode is Mode.POSITION:
+        return ops[address+arg]
+    elif mode is Mode.RELATIVE:
+        return ops[address+arg]+relativeBase
     else:
         print ("Bonkers! Unhandled case")
 

@@ -100,7 +100,7 @@ def _run(ops, input, starting_addr, last_output, memory, rel_base):
             rel_offset = _get_resolved_arg(instruction, ops, memory, rel_base, i, 1)
             rel_base += rel_offset
             i += 2
-    return ProgramState(ops, output, i, {}, rel_base, True)
+    return ProgramState(ops, output, i, memory, rel_base, True)
 
 # Returns the number at the given position (0 being the rightmost)
 def _get_nth_digit(n, number):

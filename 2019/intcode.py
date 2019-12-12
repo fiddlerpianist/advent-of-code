@@ -37,7 +37,7 @@ class ProgramState:
     def __repr__(self):
         return "Last Output: {}, Rel Base: {}. Op Address: {}".format(self.output, self.rel_base, self.address)
 
-def run(state, inp):
+def run(state, inp = []):
     return _run(state.ops, inp, state.address, state.output, state.memory, state.rel_base)
 
 def _run(ops, input, starting_addr, last_output, memory, rel_base):
